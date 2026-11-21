@@ -1,4 +1,13 @@
+include README.md
+include LICENSE
+include requirements.txt
+include pyproject.toml
 include NanUI/styles/*.qss
 include NanUI/resources/*.py
+include NanUI/resources/*.qrc
+recursive-include NanUI/resources/images *.png
 include NanUI/py.typed
 recursive-include stubs *.pyi
+recursive-include examples *.py
+recursive-include tests *.py
+recursive-include tests/baselines *.png

@@ -4,8 +4,8 @@ from NanUI.utils import get_font
 from NanUI.utils.theme_manager import get_color
 
 from PySide6.QtCore import (
-    QAbstractAnimation,
     Property,
+    QAbstractAnimation,
     QEasingCurve,
     QPropertyAnimation,
     QRect,

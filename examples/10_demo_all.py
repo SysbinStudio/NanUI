@@ -3,6 +3,7 @@
 """
 
 from NanUI import (
+    WEBENGINE_AVAILABLE,
     Card,
     CheckBox,
     ComboBox,
@@ -15,6 +16,9 @@ from NanUI import (
     TextEdit,
     Window,
 )
+
+if WEBENGINE_AVAILABLE:
+    from NanUI import WebView
 from NanUI.utils import apply_theme
 
 from PySide6.QtWidgets import QApplication, QHBoxLayout, QVBoxLayout
@@ -50,6 +54,14 @@ class MainWindow(Window):
         self.saLayout.addStretch()
         self.saTest.setContentLayout(self.saLayout)
 
+        # WebEngine 是可选依赖，没装时合集示例自动跳过 WebView
+        self.webTest = None
+        if WEBENGINE_AVAILABLE:
+            self.webTest = WebView()
+            self.webTest.setHtml(
+                "<h3 style='font-family:Microsoft YaHei'>WebView 控件测试</h3>"
+            )
+
         self.subLayout = QHBoxLayout()
         self.subLayout.addWidget(self.cbTest)
         self.subLayout.addWidget(self.rbtnTest)
@@ -65,6 +77,8 @@ class MainWindow(Window):
         self.mainLayout.addWidget(self.pgBarTest)
         self.mainLayout.addWidget(self.cardTest)
         self.mainLayout.addWidget(self.saTest)
+        if self.webTest is not None:
+            self.mainLayout.addWidget(self.webTest)
 
         self.setLayout(self.mainLayout)
 

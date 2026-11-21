@@ -10,11 +10,12 @@
 
 ## 特性
 
-- **11 个开箱即用的基础控件**：Window、Label、PushButton、LineEdit、TextEdit、CheckBox、RadioButton、ComboBox、ProgressBar、Card、ScrollArea
+- **12 个开箱即用的控件**：Window、Label、PushButton、LineEdit、TextEdit、CheckBox、RadioButton、ComboBox、ProgressBar、Card、ScrollArea、WebView（可选 WebEngine 依赖）
 - **双主题**：内置浅色（light）与深色（dark），启动时指定，运行时也可随时切换
+- **Web 引擎集成**：`WebView` 支持网页/本地 HTML、主题底色、导航黑名单、JS ↔ Python 双向消息
 - **纯 QSS 定制**：控件样式全部集中在 `styles/` 下的 QSS 文件里，改外观不用动 Python 代码
 - **类型标注（PEP 561）**：全库 type hints + `py.typed` 标记 + `.pyi` 存根，IDE 补全与类型检查友好
-- **完整测试覆盖**：52 项 pytest 测试（控件基础行为 + 双主题视觉回归）
+- **完整测试覆盖**：63 项 pytest 测试（控件基础行为 + WebView + 双主题视觉回归）
 
 ## 安装方法
 
@@ -35,6 +36,19 @@ git clone https://github.com/NanbeiTnT/NanUI.git
 cd NanUI
 pip install -e .
 ```
+
+### WebView 可选依赖
+
+`WebView` 基于 QtWebEngine（Chromium），PySide6 的基础安装不带它。需要用到时额外安装：
+
+```bash
+pip install "PySide6-Addons>=6.5"
+# 或者一次装齐 PySide6 的可选组件
+pip install "PySide6[addons]>=6.5"
+```
+
+没装也不影响其他控件：`import NanUI` 照常工作，`NanUI.WEBENGINE_AVAILABLE` 为 `False`，只有构造 `WebView` 时才会给出安装提示。
+`WebView` 采用**延迟导入**：包导入时只探测模块是否存在，不加载 Chromium 动态库；真正的 `QtWebEngine` 导入发生在 `WebView()` 构造时。
 
 ## 快速开始
 
@@ -132,6 +146,33 @@ if __name__ == "__main__":
 | **ProgressBar** | 进度条（胶囊圆角/纯色填充） ✅ |
 | **Card** | 卡片容器（可容纳其他组件） ✅ |
 | **ScrollArea** | 滚动区域（可容纳其他组件/细滚动条） ✅ |
+| **WebView** | Web 引擎（网页/本地 HTML/主题底色/导航拦截/JS 桥，需 WebEngine 组件） ✅ |
+
+## WebView 用法
+
+```python
+from NanUI import WEBENGINE_AVAILABLE, WebView, Window
+
+if WEBENGINE_AVAILABLE:
+    view = WebView()
+    view.messageReceived.connect(print)  # 接收 JS 发来的消息
+    view.addBlockedHost("evil.com")  # 域名黑名单（含子域）
+    view.blockExternalNavigation(True)  # 拦截全部 http/https 导航
+    view.setHtml("""
+        <button onclick="NanUI.postMessage('hello')">发消息给 Python</button>
+        <script>
+          NanUI.onMessage(function (text) { console.log(text); });
+        </script>
+    """)
+    view.postMessage("hello from Python")  # Python → JS（触发上面的回调）
+```
+
+- **JS → Python**：`NanUI.postMessage(text)` → `view.messageReceived[str]`；
+- **Python → JS**：`view.postMessage(text)` → `NanUI.onMessage(callback)`，或用 `view.runJavaScript(code)`；
+- **导航拦截**：`addBlockedHost()` / `blockExternalNavigation()`，被拦时发 `navigationBlocked(url)`；
+- **主题**：页面底色取 `web_bg`，`apply_theme()` 切换时自动刷新；`transparent=True` 可让页面底色透明。
+
+完整可运行示例见 `examples/11_demo_web_view.py`。
 
 ## 主题切换
 
@@ -176,14 +217,14 @@ mypy stubs/   # 校验存根
 
 ## 运行测试
 
-项目用 pytest 做单元与回归测试，共 **52 项**（16 项控件基础行为 + 36 项双主题视觉回归，与基线截图逐像素对比）：
+项目用 pytest 做单元与回归测试，共 **63 项**（16 项控件基础行为 + 11 项 WebView + 36 项双主题视觉回归，与基线截图逐像素对比）：
 
 ```bash
 pip install -r requirements-dev.txt
 pytest
 ```
 
-- 测试在 `QT_QPA_PLATFORM=offscreen` 下运行，没有显示器（如 CI）也能跑。
+- 测试在 `QT_QPA_PLATFORM=offscreen` 下运行，没有显示器（如 CI）也能跑；WebEngine 测试额外设置 `QTWEBENGINE_CHROMIUM_FLAGS=--no-sandbox`，兼容 GitHub Actions 的 Linux 无头环境。
 - 视觉回归的基线图存放在 `tests/baselines/`；外观改动后如果测试失败，会输出差异图供人工确认。
 
 ## 参与开发
@@ -200,7 +241,7 @@ pip install -r requirements-dev.txt
 | --- | --- | --- |
 | 代码规范 | `ruff check .` / `ruff format .` | lint + 格式化（规则见 `pyproject.toml`） |
 | 类型检查 | `mypy NanUI/` | 全库类型校验 |
-| 单元测试 | `pytest` | 52 项全绿 |
+| 单元测试 | `pytest` | 63 项全绿 |
 
 仓库已配置 **pre-commit 钩子**，`git commit` 时自动跑 ruff 检查，不通过会阻止提交：
 
@@ -219,7 +260,7 @@ NanUI/
 │   ├── utils/              # 工具函数（fonts.py / theme_manager.py）
 │   ├── resources/          # 图片资源（resources.qrc + 编译产物 resources_rc.py）
 │   └── py.typed            # PEP 561 类型标记（随包分发）
-├── examples/               # 控件示例（01~09 单控件 + 10 全控件合集）
+├── examples/               # 控件示例（01~11 单控件 + 10 全控件合集）
 ├── tests/                  # pytest 测试（基础行为 + 视觉回归，baselines/ 存基线图）
 ├── stubs/                  # .pyi 类型存根（mypy stubgen 生成）
 ├── setup.py                # 安装脚本

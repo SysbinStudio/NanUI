@@ -89,8 +89,9 @@
 
 ### 🚀 第九阶段：打包与发布
 
-- [x] **33. setup.py**：已有 `include_package_data`；发布前补 `long_description`、`classifiers`，  
-  并复核 wheel 里确实带上了 `.qss` 和 `resources_rc.py`
+- [x] **33. setup.py**：已补齐 `long_description`（README）、`classifiers`、`url` 与 PEP 517 构建后端，  
+  版本对齐代码 `0.4.0`；wheel 已复核带上 `.qss`、`py.typed` 和 `resources_rc.py`，  
+  sdist 含 stubs / examples / tests / baselines / 图标源文件（images 已内嵌进 `resources_rc.py`，不重复进 wheel）
 - [x] **34. 全新环境安装测试**：`pip install -e .` 验证（发布前对 wheel 再验一次）
 - [x] **35. Git 仓库**：`.gitignore` + main 分支 + 推送到 GitHub
 - [ ] **36. 版本策略**：semver 承诺 + 弃用（deprecation）机制，进入 1.0 前定下来
@@ -186,5 +187,16 @@
 
 - [ ] **78. 记事本**：菜单 / 工具栏 / 状态栏 / 多标签页（会反哺第十阶段的控件）
 - [ ] **79. 系统监控**：进度条 / 表格 / 图表（`matplotlib` 或 `pyqtgraph`）
+
+---
+
+### 🌐 第十九阶段：Web 引擎集成
+
+- [x] **80. `WebView`**（Web 引擎控件）：基于 QtWebEngine，网页 / 本地 HTML / HTML 字符串，
+  主题底色随 `apply_theme()` 刷新，域名黑名单 + 全局外链拦截，
+  `NanUI.postMessage()` ↔ `messageReceived` 双向消息通道；
+  WebEngine 作为可选依赖（extra `webengine`），缺失时 `import NanUI` 不受影响；
+  控件用组合 + 延迟导入，构造 `WebView()` 时才真正加载 Chromium 模块。
+  配套：`tests/test_web_view.py`、`examples/11_demo_web_view.py`、`.pyi` 存根与 README 用法。
 
 ---
